@@ -29,14 +29,22 @@ class DB_Manager:
             cur.execute('SELECT * FROM settings WHERE user_id = ?', (user_id,))
             s = cur.fetchone()
             if s:
-                cur.execute('''SELECT id FROM movies 
-                            WHERE
-                            (release_date BETWEEN ? AND ?) and
-                            (vote_average >= ?) and
-                            (popularity >= ?)
-                            ORDER BY random()''', (s[1], s[2], s[3], s[4]))
+                query = '''
+                    SELECT DISTINCT m.id FROM movies m
+                    JOIN movies_genres mg ON m.id = mg.movie_id
+                    WHERE release_date BETWEEN ? AND ?
+                    AND vote_average >= ?
+                    AND popularity >= ?
+                    AND mg.genre_id IN (
+                        SELECT genre_id 
+                        FROM genre_settings 
+                        WHERE user_id = ?
+                    )
+                    ORDER BY RANDOM()
+                '''
+                cur.execute(query, (s[1], s[2], s[3], s[4], user_id))
             else:
-                cur.execute('SELECT id FROM movies ORDER BY random()')
+                cur.execute('SELECT id FROM movies ORDER BY RANDOM()')           
             return cur.fetchmany(n)
 
     def get_random_movie(self):
@@ -82,6 +90,14 @@ vote_average : {r[5]}
             cur = con.cursor()
             cur.execute('SELECT * FROM genres')
             return cur.fetchall()
+        
+    def add_genre_setting(self, user_id, genre_id):
+        conn = sqlite3.connect(self.database)
+        with conn:
+            cur = conn.cursor()
+            cur.execute('INSERT INTO genre_settings (user_id, genre_id, neg_or_pos) VALUES (?, ?, 1)', 
+                    (user_id, genre_id))
+            conn.commit()
     
 if __name__ == '__main__':
     m = DB_Manager(DATABASE)
