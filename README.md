@@ -60,4 +60,4 @@ python main.py
 - `/reset` - Сброс настроек
 
 ---
-Made by [Ваня]
+Made by Ваня
