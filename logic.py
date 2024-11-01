@@ -57,6 +57,31 @@ title: {r[1]}
 release_date : {r[4]}
 vote_average : {r[5]}
 '''
+    def save_settings(self, user_id, date_start, date_end, rating, popularity):
+        conn = sqlite3.connect(self.database)
+        with conn:
+            cur = conn.cursor()
+            cur.execute("DELETE FROM settings WHERE user_id = ?", (user_id,))
+            cur.execute('''INSERT OR REPLACE INTO settings 
+                    (user_id, release_date_strat, release_date_end, vote_average, popularity)
+                    VALUES (?, ?, ?, ?, ?)''', 
+                    (user_id, date_start, date_end, rating, popularity))
+            conn.commit()
+                
+    def reset_settings(self, user_id):
+        conn = sqlite3.connect(self.database)
+        with conn:
+            cur = conn.cursor()
+            cur.execute('DELETE FROM settings WHERE user_id = ?', (user_id,))
+            cur.execute('DELETE FROM genre_settings WHERE user_id = ?', (user_id,))
+            conn.commit()
+
+    def get_genres(self):
+        con = sqlite3.connect(self.database)
+        with con:
+            cur = con.cursor()
+            cur.execute('SELECT * FROM genres')
+            return cur.fetchall()
     
 if __name__ == '__main__':
     m = DB_Manager(DATABASE)
