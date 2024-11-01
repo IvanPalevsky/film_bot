@@ -73,6 +73,22 @@ def reset_settings(message):
     m.reset_settings(user_id)
     bot.reply_to(message, "Настройки сброшены. Теперь перезапустите бота командой /start")
 
+@bot.callback_query_handler(func=lambda call: call.data.startswith('genre_'))
+def callback_genre(call):
+    genre_id = int(call.data.split('_')[1])
+    user_id = call.from_user.id
+    m.add_genre_setting(user_id, genre_id)
+    bot.answer_callback_query(call.id, text="Жанр добавлен")
+
+@bot.callback_query_handler(func=lambda call: call.data == 'end_genres')
+def callback_end_genres(call):
+    bot.delete_message(call.message.chat.id, call.message.message_id)
+    movies = m.get_movie_by_settings(call.from_user.id, n=1)
+    if movies:
+        movie_info = m.movie_discription(movies[0][0])
+        bot.send_message(call.message.chat.id, movie_info)
+    else:
+        bot.send_message(call.message.chat.id, "Фильмы не найдены")
 
 if __name__ == '__main__':
     m = DB_Manager(DATABASE)
